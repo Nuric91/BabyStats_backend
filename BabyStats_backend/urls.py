@@ -18,6 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include('rest_framework.urls')), 
+    path("admin/", admin.site.urls),
+
+    # Your API endpoints
+    path("api/", include("rest_api.urls")),
+
+    # Optional: DRF login/logout for the browsable API
+    path("api-auth/", include("rest_framework.urls")),
 ]
