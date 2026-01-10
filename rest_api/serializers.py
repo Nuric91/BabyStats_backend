@@ -8,7 +8,7 @@ class SleepTimeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SleepTime
-        fields = ["id", "child", "date", "length", "comment"]
+        fields = ["id", "child", "date", "time", "length", "comment"]
 
 
 class ChildListSerializer(serializers.ModelSerializer):

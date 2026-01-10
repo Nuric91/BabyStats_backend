@@ -20,8 +20,9 @@ class SleepTime(models.Model):
     )
 
     date = models.DateField()
-    length = models.PositiveIntegerField(help_text="Length in minutes")
+    time = models.TimeField(help_text="Time when the sleep occurred", null=True, blank=True)
+    length = models.PositiveIntegerField(help_text="Length in seconds")
     comment = models.TextField(blank=True, default="")
 
     def __str__(self) -> str:
-        return f"SleepTime(child={self.child_id}, date={self.date}, length={self.length}m)"
+        return f"SleepTime(child={self.child_id}, date={self.date}, time={self.time}, length={self.length}m)"
