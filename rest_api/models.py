@@ -3,9 +3,11 @@ from django.db import models
 
 class Child(models.Model):
     """A child profile. Uses Django's default primary key field `id`."""
+    
+    name = models.CharField(max_length=100, blank=True, default="")
 
     def __str__(self) -> str:
-        return f"Child {self.id}"
+        return f"{self.name or f'Child {self.id}'}"
 
 
 class SleepTime(models.Model):

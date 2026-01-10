@@ -1,12 +1,18 @@
 from rest_framework import generics, viewsets
 from .models import Child, SleepTime
-from .serializers import ChildSerializer, SleepTimeSerializer
+from .serializers import ChildSerializer, ChildListSerializer, SleepTimeSerializer
 
 
 class ChildViewSet(viewsets.ModelViewSet):
     """CRUD for children."""
     queryset = Child.objects.all().order_by("id")
     serializer_class = ChildSerializer
+    
+    def get_serializer_class(self):
+        # Use lightweight serializer for list action
+        if self.action == 'list':
+            return ChildListSerializer
+        return ChildSerializer
 
 
 class ChildSleepTimeListCreateView(generics.ListCreateAPIView):

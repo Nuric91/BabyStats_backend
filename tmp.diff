@@ -1,0 +1,106 @@
+diff --git a/BabyStats_backend/settings.py b/BabyStats_backend/settings.py
+index e90f162..380d5fc 100644
+--- a/BabyStats_backend/settings.py
++++ b/BabyStats_backend/settings.py
+@@ -38,12 +38,14 @@ INSTALLED_APPS = [
+     'django.contrib.messages',
+     'django.contrib.staticfiles',
+     'rest_framework',
++    'corsheaders',
+     'rest_api',
+ ]
+ 
+ MIDDLEWARE = [
+     'django.middleware.security.SecurityMiddleware',
+     'django.contrib.sessions.middleware.SessionMiddleware',
++    'corsheaders.middleware.CorsMiddleware',
+     'django.middleware.common.CommonMiddleware',
+     'django.middleware.csrf.CsrfViewMiddleware',
+     'django.contrib.auth.middleware.AuthenticationMiddleware',
+@@ -59,6 +61,14 @@ REST_FRAMEWORK = {
+     'PAGE_SIZE': 10
+ }
+ 
++# CORS settings
++CORS_ALLOWED_ORIGINS = [
++    "http://localhost:3000",
++    "http://127.0.0.1:3000",
++]
++
++CORS_ALLOW_ALL_ORIGINS = True  # For development only - be more restrictive in production
++
+ ROOT_URLCONF = 'BabyStats_backend.urls'
+ 
+ TEMPLATES = [
+diff --git a/rest_api/models.py b/rest_api/models.py
+index 7184602..477c943 100644
+--- a/rest_api/models.py
++++ b/rest_api/models.py
+@@ -3,9 +3,11 @@ from django.db import models
+ 
+ class Child(models.Model):
+     """A child profile. Uses Django's default primary key field `id`."""
++    
++    name = models.CharField(max_length=100, blank=True, default="")
+ 
+     def __str__(self) -> str:
+-        return f"Child {self.id}"
++        return f"{self.name or f'Child {self.id}'}"
+ 
+ 
+ class SleepTime(models.Model):
+diff --git a/rest_api/serializers.py b/rest_api/serializers.py
+index 0c3585d..eeef8aa 100644
+--- a/rest_api/serializers.py
++++ b/rest_api/serializers.py
+@@ -4,17 +4,24 @@ from .models import Child, SleepTime
+ 
+ class SleepTimeSerializer(serializers.ModelSerializer):
+     # child comes from URL in nested endpoints; we still expose it in responses
+-    child = serializers.IntegerField(read_only=True)
++    child = serializers.IntegerField(source='child_id', read_only=True)
+ 
+     class Meta:
+         model = SleepTime
+         fields = ["id", "child", "date", "length", "comment"]
+ 
+ 
++class ChildListSerializer(serializers.ModelSerializer):
++    """Lightweight serializer for listing children (no nested data)"""
++    class Meta:
++        model = Child
++        fields = ["id", "name"]
++
++
+ class ChildSerializer(serializers.ModelSerializer):
+     # nested read-only list (handy for a "details" screen)
+     sleep_times = SleepTimeSerializer(many=True, read_only=True)
+ 
+     class Meta:
+         model = Child
+-        fields = ["id", "sleep_times"]
++        fields = ["id", "name", "sleep_times"]
+diff --git a/rest_api/views.py b/rest_api/views.py
+index 0ed8580..d734c95 100644
+--- a/rest_api/views.py
++++ b/rest_api/views.py
+@@ -1,12 +1,18 @@
+ from rest_framework import generics, viewsets
+ from .models import Child, SleepTime
+-from .serializers import ChildSerializer, SleepTimeSerializer
++from .serializers import ChildSerializer, ChildListSerializer, SleepTimeSerializer
+ 
+ 
+ class ChildViewSet(viewsets.ModelViewSet):
+     """CRUD for children."""
+     queryset = Child.objects.all().order_by("id")
+     serializer_class = ChildSerializer
++    
++    def get_serializer_class(self):
++        # Use lightweight serializer for list action
++        if self.action == 'list':
++            return ChildListSerializer
++        return ChildSerializer
+ 
+ 
+ class ChildSleepTimeListCreateView(generics.ListCreateAPIView):
