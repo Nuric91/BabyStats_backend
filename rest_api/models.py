@@ -26,3 +26,29 @@ class SleepTime(models.Model):
 
     def __str__(self) -> str:
         return f"SleepTime(child={self.child_id}, date={self.date}, time={self.time}, length={self.length}m)"
+
+
+class Tag(models.Model):
+    """A tag that can be attached to activities."""
+
+    name = models.CharField(max_length=80, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Activity(models.Model):
+    """One activity entry for a child."""
+
+    child = models.ForeignKey(
+        Child,
+        on_delete=models.CASCADE,
+        related_name="activities",
+    )
+
+    date = models.DateTimeField(help_text="Date/time of the activity")
+    length = models.PositiveIntegerField(help_text="Length in seconds")
+    tags = models.ManyToManyField(Tag, related_name="activities", blank=True)
+
+    def __str__(self) -> str:
+        return f"Activity(child={self.child_id}, date={self.date}, length={self.length}s)"

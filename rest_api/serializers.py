@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Child, SleepTime
+from .models import Child, SleepTime, Activity, Tag
 
 
 class SleepTimeSerializer(serializers.ModelSerializer):
@@ -25,3 +25,34 @@ class ChildSerializer(serializers.ModelSerializer):
     class Meta:
         model = Child
         fields = ["id", "name", "sleep_times"]
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ["id", "name"]
+
+
+class ActivitySerializer(serializers.ModelSerializer):
+    # expose child id in responses, allow writing via child_id
+    child = serializers.IntegerField(source='child_id', read_only=True)
+    child_id = serializers.PrimaryKeyRelatedField(
+        queryset=Child.objects.all(),
+        write_only=True,
+        required=False,
+        source='child',
+    )
+
+    # read nested tags, write with tag_ids
+    tags = TagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        write_only=True,
+        required=False,
+        source="tags",
+    )
+
+    class Meta:
+        model = Activity
+        fields = ["id", "child", "child_id", "date", "length", "tags", "tag_ids"]
